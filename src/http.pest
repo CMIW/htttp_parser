@@ -1,0 +1,70 @@
+http_request = _{ method ~ " " ~ uri ~ " " ~ version ~ NEWLINE ~ field* }
+
+http_response = _{ version ~ status_code ~ status_messsage ~ NEWLINE ~ field* }
+
+method = {
+  "OPTIONS" |
+  "GET" |
+  "HEAD" |
+  "POST" |
+  "PUT" |
+  "DELETE" |
+  "TRACE" |
+  "CONNECT"
+}
+
+uri = ${ "/" ~ (valid_char* ~ !invalid_char) }
+
+valid_char = {
+  ALPHA |
+  ASCII_DIGIT |
+  "-" |
+  "." |
+  "_" |
+  "~" |
+  ":" |
+  "/" |
+  "?" |
+  "#" |
+  "[" |
+  "]" |
+  "@" |
+  "!" |
+  "$" |
+  "&" |
+  "'" |
+  "(" |
+  ")" |
+  "*" |
+  "+" |
+  "," |
+  ";" |
+  "="
+}
+
+invalid_char = {
+  "{" |
+  "}" |
+  "<" |
+  ">" |
+  "^" |
+  "`" |
+  "\\" |
+  "\t"
+}
+
+version = { "HTTP/" ~ version_number }
+version_number = { ASCII_DIGIT ~ "." ~ ASCII_DIGIT ~ ("." ~ ASCII_DIGIT)*}
+
+// TODO: create more strict rules to parse an http field
+field = _{ field_line ~ (NEWLINE ~ field_line)* ~ !NEWLINE }
+field_line = { field_name ~ ": " ~ field_value}
+field_name = { ALPHA+ ~ ("-" ~ ALPHA+)* ~ !"-" }
+field_value = { valid_char+ ~ (f_v_separator ~ valid_char+)* ~ !invalid_char }
+f_v_separator = { "," | " "? }
+
+status_code = { ASCII_DIGIT{3} }
+
+status_messsage = { ('A'..'Z') }
+
+ALPHA = { ('A'..'Z') | ('a'..'z') }
