@@ -12,7 +12,7 @@ use pest::Parser;
 #[grammar = "http.pest"]
 pub struct HttpParser;
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Getters)]
 pub struct HtttpRequest {
     uri: String,
     method: String,
@@ -38,22 +38,6 @@ impl HtttpRequest {
         else{
             return true;
         }
-    }
-
-    pub fn method(&self) -> String {
-        self.method.clone()
-    }
-
-    pub fn uri(&self) -> String {
-        self.uri.clone()
-    }
-
-    pub fn version(&self) -> String {
-        self.version.clone()
-    }
-
-    pub fn field(&self) -> Vec<String> {
-        self.field.clone()
     }
 
 }
