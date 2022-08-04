@@ -1,6 +1,10 @@
 extern crate pest;
+
 #[macro_use]
 extern crate pest_derive;
+
+#[macro_use]
+extern crate derive_getters;
 
 use pest::Parser;
 
@@ -8,7 +12,7 @@ use pest::Parser;
 #[grammar = "http.pest"]
 pub struct HttpParser;
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Getters)]
 pub struct HtttpRequest {
     uri: String,
     method: String,
