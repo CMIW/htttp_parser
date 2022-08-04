@@ -3,6 +3,9 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
+#[macro_use]
+extern crate derive_getters;
+
 use pest::Parser;
 
 #[derive(Parser)]
@@ -35,22 +38,6 @@ impl HtttpRequest {
         else{
             return true;
         }
-    }
-
-    pub fn method(&self) -> String {
-        self.method.clone()
-    }
-
-    pub fn uri(&self) -> String {
-        self.uri.clone()
-    }
-
-    pub fn version(&self) -> String {
-        self.version.clone()
-    }
-
-    pub fn field(&self) -> Vec<String> {
-        self.field.clone()
     }
 
 }
