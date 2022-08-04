@@ -40,6 +40,22 @@ impl HtttpRequest {
         }
     }
 
+    pub fn method(&self) -> String {
+        self.method.clone()
+    }
+
+    pub fn uri(&self) -> String {
+        self.uri.clone()
+    }
+
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    pub fn field(&self) -> Vec<String> {
+        self.field.clone()
+    }
+
 }
 
 impl std::fmt::Display for HtttpRequest {
