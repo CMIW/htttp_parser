@@ -13,15 +13,15 @@ use pest::Parser;
 pub struct HttpParser;
 
 #[derive(Debug, PartialEq, Default, Getters)]
-pub struct HtttpRequest {
+pub struct HttpRequest {
     uri: String,
     method: String,
     version: String,
     field: Vec<String>,
 }
 
-impl HtttpRequest {
-    pub fn new() -> HtttpRequest {
+impl HttpRequest {
+    pub fn new() -> HttpRequest {
         Default::default()
     }
 
@@ -42,7 +42,7 @@ impl HtttpRequest {
 
 }
 
-impl std::fmt::Display for HtttpRequest {
+impl std::fmt::Display for HttpRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter)-> std::fmt::Result {
         if self.field.len() == 0 && !self.is_empty() {
             write!(f, "{} {} {}\r\n", self.method, self.uri, self.version)
@@ -161,11 +161,11 @@ impl std::fmt::Display for HtttpResponse {
 pub struct Http;
 
 impl Http {
-    pub fn parse_request(http_request: &str) -> HtttpRequest {
+    pub fn parse_request(http_request: &str) -> HttpRequest {
         let parsed = HttpParser::parse(Rule::http_request, http_request)
         .unwrap_or_else(|e| panic!("{}", e));
 
-        let mut request = HtttpRequest::new();
+        let mut request = HttpRequest::new();
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
