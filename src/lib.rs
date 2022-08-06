@@ -73,7 +73,23 @@ impl HtttpResponse {
         Default::default()
     }
 
-    pub fn set_status(&mut self, status: &str) -> &mut Self{
+    pub fn set_status_line(&mut self, status: &str) -> &mut Self{
+        let parsed = HttpParser::parse(Rule::status_line, status)
+        .unwrap_or_else(|e| panic!("{}", e));
+
+        for pair in parsed {
+            match format!("{:?}",pair.as_rule()).as_str() {
+                "version" => { self.version =  pair.as_str().to_string(); },
+                "status" => { self.status =  pair.as_str().to_string(); },
+                "message" => { self.message =  pair.as_str().to_string(); },
+                _ => {},
+            }
+        }
+
+        self
+    }
+
+    pub fn set_status_code(&mut self, status: &str) -> &mut Self{
         self.status = String::from(status);
 
         self
@@ -164,7 +180,7 @@ impl Http {
         request
     }
 
-    pub fn parse_responce(http_responce: &str) -> HtttpResponse {
+    pub fn parse_response(http_responce: &str) -> HtttpResponse {
         let parsed = HttpParser::parse(Rule::http_response, http_responce)
         .unwrap_or_else(|e| panic!("{}", e));
 
@@ -496,6 +512,28 @@ mod tests {
     }
 
     #[test]
+    fn success_http_responce1() {
+        let http_response = "HTTP/1.1 404 NOT FOUND\r\n\
+            Content-Length: 206\r\n\
+            \r\n\
+            <!DOCTYPE html>\r\n\
+            <html lang=\"en\">\r\n\
+            \t<head>\r\n\
+            \t\t<meta charset=\"utf-8\">\r\n\
+            \t\t<title>Hello!</title>\r\n\
+            \t</head>\r\n\
+            \t<body>\r\n\
+            \t\t<h1>Oops!</h1>
+            \t\t<p>Sorry, I don't know what you're asking for.</p>
+            \t</body>\r\n\
+            </html>";
+
+        HttpParser::parse(Rule::http_response, http_response)
+        .expect("unsuccessful parse")
+        .next();
+    }
+
+    #[test]
     fn success_create_http_responce_struct0() {
         let http_response = "HTTP/1.1 200 OK\r\n\
             Content-Length: 299\r\n\
@@ -513,7 +551,7 @@ mod tests {
             \r\n\
             }, false);";
 
-        let response = Http::parse_responce(http_response);
+        let response = Http::parse_response(http_response);
 
         println!("{}", response);
     }
@@ -524,8 +562,31 @@ mod tests {
 
         response
         .set_version("HTTP/1.1")
-        .set_status("200")
+        .set_status_code("200")
         .set_message("OK")
+        .push_field_line("Content-Length: 299")
+        .set_body("function test(e) {\r\n\
+            \tconsole.log(e);\r\n\
+            }\r\n\
+            \r\n\
+            // Add event listener on keydown\r\n\
+            document.addEventListener('keydown', (event) => {\r\n\
+            \tvar name = event.key;\r\n\
+            \tvar code = event.code;\r\n\
+            \t// Alert the key name and key code on keydown\r\n\
+            \tconsole.log(`Key pressed ${name} \r\n Key code value: ${code}`);\r\n\
+            \r\n\
+            }, false);");
+
+        println!("{}", response);
+    }
+
+    #[test]
+    fn success_build_http_responce_struct1() {
+        let mut response = HtttpResponse::new();
+
+        response
+        .set_status_line("HTTP/1.1 200 OK")
         .push_field_line("Content-Length: 299")
         .set_body("function test(e) {\r\n\
             \tconsole.log(e);\r\n\

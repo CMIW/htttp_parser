@@ -61,13 +61,15 @@ field_name = { ALPHA+ ~ ("-" ~ ALPHA+)* ~ !"-" }
 field_value = { valid_char+ ~ (f_v_separator ~ valid_char+)* ~ !invalid_char }
 f_v_separator = { "," | " "? }
 
-http_response = _{ version ~ " " ~ status_code ~ " " ~ status_messsage ~ NEWLINE ~ response_field ~ NEWLINE ~ NEWLINE ~ response_body }
+http_response = _{ status_line ~ NEWLINE ~ response_field ~ NEWLINE ~ NEWLINE ~ response_body }
+
+status_line = _{ version ~ " " ~ status_code ~ " " ~ status_messsage }
 
 response_field = _{ field_line ~ (NEWLINE ~ field_line)* }
 
 status_code = { ASCII_DIGIT{3} }
 
-status_messsage = { ('A'..'Z')+ }
+status_messsage = { ('A'..'Z')+ ~ (" " ~ ('A'..'Z')+)? }
 
 response_body = { ANY+ }
 
