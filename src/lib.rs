@@ -59,6 +59,89 @@ impl std::fmt::Display for HtttpRequest {
     }
 }
 
+#[derive(Debug, PartialEq, Default, Getters)]
+pub struct HtttpResponse {
+    status: String,
+    message: String,
+    version: String,
+    field: Vec<String>,
+    body: String,
+}
+
+impl HtttpResponse {
+    pub fn new() -> HtttpResponse {
+        Default::default()
+    }
+
+    pub fn set_status(&mut self, status: &str) -> &Self{
+        self.status = String::from(status);
+
+        self
+    }
+
+    pub fn set_message(&mut self, message: &str) -> &Self{
+        self.message = String::from(message);
+
+        self
+    }
+
+    pub fn set_version(&mut self, version: &str) -> &Self{
+        self.version = String::from(version);
+
+        self
+    }
+
+    pub fn set_body(&mut self, body: &str) -> &Self{
+        self.body = String::from(body);
+
+        self
+    }
+
+    pub fn push_field_line(&mut self, field_line: &str) -> &Self{
+        self.field.push(String::from(field_line));
+
+        self
+    }
+
+    pub fn append_field(&mut self, field: &mut Vec<String>) -> &Self{
+        self.field.append(field);
+
+        self
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.status == "" ||
+        self.message == "" ||
+        self.version == "" ||
+        self.field.len() == 0 ||
+        self.body == ""
+    }
+
+    pub fn is_valid(&self) -> bool {
+        if self.is_empty() {
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
+}
+
+impl std::fmt::Display for HtttpResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter)-> std::fmt::Result {
+        let mut request = format!("{} {} {}", self.version, self.status, self.message);
+
+        for field_line in self.field.clone() {
+            request = request + "\r\n" + &field_line;
+        }
+
+        request = format!("{}\r\n\r\n{}", request, self.body);
+
+        write!(f, "{}", request)
+    }
+}
+
 pub struct Http;
 
 impl Http {
@@ -74,6 +157,26 @@ impl Http {
                 "uri" => { request.uri =  pair.as_str().to_string(); },
                 "version" => { request.version =  pair.as_str().to_string(); },
                 "field_line" => { request.field.push(pair.as_str().to_string()); },
+                _ => {},
+            }
+        }
+
+        request
+    }
+
+    pub fn parse_responce(http_responce: &str) -> HtttpResponse {
+        let parsed = HttpParser::parse(Rule::http_response, http_responce)
+        .unwrap_or_else(|e| panic!("{}", e));
+
+        let mut request = HtttpResponse::new();
+
+        for pair in parsed {
+            match format!("{:?}",pair.as_rule()).as_str() {
+                "status_code" => { request.status =  pair.as_str().to_string(); },
+                "status_messsage" => { request.message =  pair.as_str().to_string(); },
+                "version" => { request.version =  pair.as_str().to_string(); },
+                "field_line" => { request.field.push(pair.as_str().to_string()); },
+                "response_body" => { request.body =  pair.as_str().to_string(); },
                 _ => {},
             }
         }
@@ -367,5 +470,51 @@ mod tests {
         let request = Http::parse_request(http_request);
 
         println!("{}", request);
+    }
+
+    #[test]
+    fn success_http_responce0() {
+        let http_response = "HTTP/1.1 200 OK\r\n\
+            Content-Length: 299\r\n\
+            \r\n\
+            function test(e) {\r\n\
+            \tconsole.log(e);\r\n\
+            }\r\n\
+            \r\n\
+            // Add event listener on keydown\r\n\
+            document.addEventListener('keydown', (event) => {\r\n\
+            \tvar name = event.key;\r\n\
+            \tvar code = event.code;\r\n\
+            \t// Alert the key name and key code on keydown\r\n\
+            \tconsole.log(`Key pressed ${name} \r\n Key code value: ${code}`);\r\n\
+            \r\n\
+            }, false);";
+
+        HttpParser::parse(Rule::http_response, http_response)
+        .expect("unsuccessful parse")
+        .next();
+    }
+
+    #[test]
+    fn success_create_http_responce_struct0() {
+        let http_response = "HTTP/1.1 200 OK\r\n\
+            Content-Length: 299\r\n\
+            \r\n\
+            function test(e) {\r\n\
+            \tconsole.log(e);\r\n\
+            }\r\n\
+            \r\n\
+            // Add event listener on keydown\r\n\
+            document.addEventListener('keydown', (event) => {\r\n\
+            \tvar name = event.key;\r\n\
+            \tvar code = event.code;\r\n\
+            \t// Alert the key name and key code on keydown\r\n\
+            \tconsole.log(`Key pressed ${name} \r\n Key code value: ${code}`);\r\n\
+            \r\n\
+            }, false);";
+
+        let response = Http::parse_responce(http_response);
+
+        println!("{}", response);
     }
 }

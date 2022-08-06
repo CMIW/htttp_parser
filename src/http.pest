@@ -1,6 +1,4 @@
-http_request = _{ method ~ " " ~ uri ~ " " ~ version ~ NEWLINE ~ field* }
-
-http_response = _{ version ~ status_code ~ status_messsage ~ NEWLINE ~ field* }
+http_request = _{ method ~ " " ~ uri ~ " " ~ version ~ NEWLINE ~ field? }
 
 method = {
   "OPTIONS" |
@@ -63,8 +61,14 @@ field_name = { ALPHA+ ~ ("-" ~ ALPHA+)* ~ !"-" }
 field_value = { valid_char+ ~ (f_v_separator ~ valid_char+)* ~ !invalid_char }
 f_v_separator = { "," | " "? }
 
+http_response = _{ version ~ " " ~ status_code ~ " " ~ status_messsage ~ NEWLINE ~ response_field ~ NEWLINE ~ NEWLINE ~ response_body }
+
+response_field = _{ field_line ~ (NEWLINE ~ field_line)* }
+
 status_code = { ASCII_DIGIT{3} }
 
-status_messsage = { ('A'..'Z') }
+status_messsage = { ('A'..'Z')+ }
+
+response_body = { ANY+ }
 
 ALPHA = { ('A'..'Z') | ('a'..'z') }
