@@ -73,37 +73,37 @@ impl HtttpResponse {
         Default::default()
     }
 
-    pub fn set_status(&mut self, status: &str) -> &Self{
+    pub fn set_status(&mut self, status: &str) -> &mut Self{
         self.status = String::from(status);
 
         self
     }
 
-    pub fn set_message(&mut self, message: &str) -> &Self{
+    pub fn set_message(&mut self, message: &str) -> &mut Self{
         self.message = String::from(message);
 
         self
     }
 
-    pub fn set_version(&mut self, version: &str) -> &Self{
+    pub fn set_version(&mut self, version: &str) -> &mut Self{
         self.version = String::from(version);
 
         self
     }
 
-    pub fn set_body(&mut self, body: &str) -> &Self{
+    pub fn set_body(&mut self, body: &str) -> &mut Self{
         self.body = String::from(body);
 
         self
     }
 
-    pub fn push_field_line(&mut self, field_line: &str) -> &Self{
+    pub fn push_field_line(&mut self, field_line: &str) -> &mut Self{
         self.field.push(String::from(field_line));
 
         self
     }
 
-    pub fn append_field(&mut self, field: &mut Vec<String>) -> &Self{
+    pub fn append_field(&mut self, field: &mut Vec<String>) -> &mut Self{
         self.field.append(field);
 
         self
@@ -514,6 +514,31 @@ mod tests {
             }, false);";
 
         let response = Http::parse_responce(http_response);
+
+        println!("{}", response);
+    }
+
+    #[test]
+    fn success_build_http_responce_struct0() {
+        let mut response = HtttpResponse::new();
+
+        response
+        .set_version("HTTP/1.1")
+        .set_status("200")
+        .set_message("OK")
+        .push_field_line("Content-Length: 299")
+        .set_body("function test(e) {\r\n\
+            \tconsole.log(e);\r\n\
+            }\r\n\
+            \r\n\
+            // Add event listener on keydown\r\n\
+            document.addEventListener('keydown', (event) => {\r\n\
+            \tvar name = event.key;\r\n\
+            \tvar code = event.code;\r\n\
+            \t// Alert the key name and key code on keydown\r\n\
+            \tconsole.log(`Key pressed ${name} \r\n Key code value: ${code}`);\r\n\
+            \r\n\
+            }, false);");
 
         println!("{}", response);
     }
