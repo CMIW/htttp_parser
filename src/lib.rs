@@ -7,6 +7,7 @@ extern crate pest_derive;
 extern crate derive_getters;
 
 use pest::Parser;
+use anyhow::{Result, Error};
 
 #[derive(Parser)]
 #[grammar = "http.pest"]
@@ -73,9 +74,8 @@ impl HtttpResponse {
         Default::default()
     }
 
-    pub fn set_status_line(&mut self, status: &str) -> &mut Self{
-        let parsed = HttpParser::parse(Rule::status_line, status)
-        .unwrap_or_else(|e| panic!("{}", e));
+    pub fn set_status_line(&mut self, status: &str) -> Result<&mut Self, Error> {
+        let parsed = HttpParser::parse(Rule::status_line, status)?;
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
@@ -86,7 +86,7 @@ impl HtttpResponse {
             }
         }
 
-        self
+        Ok(self)
     }
 
     pub fn set_status_code(&mut self, status: &str) -> &mut Self{
@@ -161,9 +161,8 @@ impl std::fmt::Display for HtttpResponse {
 pub struct Http;
 
 impl Http {
-    pub fn parse_request(http_request: &str) -> HttpRequest {
-        let parsed = HttpParser::parse(Rule::http_request, http_request)
-        .unwrap_or_else(|e| panic!("{}", e));
+    pub fn parse_request(http_request: &str) -> Result<HttpRequest, Error> {
+        let parsed = HttpParser::parse(Rule::http_request, http_request)?;
 
         let mut request = HttpRequest::new();
 
@@ -177,27 +176,26 @@ impl Http {
             }
         }
 
-        request
+        Ok(request)
     }
 
-    pub fn parse_response(http_responce: &str) -> HtttpResponse {
-        let parsed = HttpParser::parse(Rule::http_response, http_responce)
-        .unwrap_or_else(|e| panic!("{}", e));
+    pub fn parse_response(http_responce: &str) -> Result<HtttpResponse, Error> {
+        let parsed = HttpParser::parse(Rule::http_response, http_responce)?;
 
-        let mut request = HtttpResponse::new();
+        let mut response = HtttpResponse::new();
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
-                "status_code" => { request.status =  pair.as_str().to_string(); },
-                "status_messsage" => { request.message =  pair.as_str().to_string(); },
-                "version" => { request.version =  pair.as_str().to_string(); },
-                "field_line" => { request.field.push(pair.as_str().to_string()); },
-                "response_body" => { request.body =  pair.as_str().to_string(); },
+                "status_code" => { response.status =  pair.as_str().to_string(); },
+                "status_messsage" => { response.message =  pair.as_str().to_string(); },
+                "version" => { response.version =  pair.as_str().to_string(); },
+                "field_line" => { response.field.push(pair.as_str().to_string()); },
+                "response_body" => { response.body =  pair.as_str().to_string(); },
                 _ => {},
             }
         }
 
-        request
+        Ok(response)
     }
 }
 
