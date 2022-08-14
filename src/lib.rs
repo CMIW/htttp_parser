@@ -3,158 +3,33 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-#[macro_use]
-extern crate derive_getters;
-
 use pest::Parser;
 use anyhow::{Result, Error};
+use http_request::HttpRequest;
+use http_response::HtttpResponse;
 
 #[derive(Parser)]
 #[grammar = "http.pest"]
 pub struct HttpParser;
 
-#[derive(Debug, PartialEq, Default, Getters)]
-pub struct HttpRequest {
-    uri: String,
-    method: String,
-    version: String,
-    field: Vec<String>,
+pub trait SetStatusLine {
+    fn set_status_line(&mut self, status: &str) -> Result<&mut Self, Error>;
 }
 
-impl HttpRequest {
-    pub fn new() -> HttpRequest {
-        Default::default()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.uri == "" ||
-        self.method == "" ||
-        self.version == ""
-    }
-
-    pub fn is_valid(&self) -> bool {
-        if self.is_empty() {
-            return false;
-        }
-        else{
-            return true;
-        }
-    }
-
-}
-
-impl std::fmt::Display for HttpRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter)-> std::fmt::Result {
-        if self.field.len() == 0 && !self.is_empty() {
-            write!(f, "{} {} {}\r\n", self.method, self.uri, self.version)
-        }
-        else {
-            let mut request = format!("{} {} {}", self.method, self.uri, self.version);
-
-            for field_line in self.field.clone() {
-                request = request + "\r\n" + &field_line;
-            }
-
-            write!(f, "{}", request)
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Default, Getters)]
-pub struct HtttpResponse {
-    status: String,
-    message: String,
-    version: String,
-    field: Vec<String>,
-    body: String,
-}
-
-impl HtttpResponse {
-    pub fn new() -> HtttpResponse {
-        Default::default()
-    }
-
-    pub fn set_status_line(&mut self, status: &str) -> Result<&mut Self, Error> {
+impl SetStatusLine for HtttpResponse {
+    fn set_status_line(&mut self, status: &str) -> Result<&mut Self, Error> {
         let parsed = HttpParser::parse(Rule::status_line, status)?;
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
-                "version" => { self.version =  pair.as_str().to_string(); },
-                "status" => { self.status =  pair.as_str().to_string(); },
-                "message" => { self.message =  pair.as_str().to_string(); },
+                "version" => { self.set_version(pair.as_str()); },
+                "status" => { self.set_status_code(pair.as_str()); },
+                "message" => { self.set_message(pair.as_str()); },
                 _ => {},
             }
         }
 
         Ok(self)
-    }
-
-    pub fn set_status_code(&mut self, status: &str) -> &mut Self{
-        self.status = String::from(status);
-
-        self
-    }
-
-    pub fn set_message(&mut self, message: &str) -> &mut Self{
-        self.message = String::from(message);
-
-        self
-    }
-
-    pub fn set_version(&mut self, version: &str) -> &mut Self{
-        self.version = String::from(version);
-
-        self
-    }
-
-    pub fn set_body(&mut self, body: &str) -> &mut Self{
-        self.body = String::from(body);
-
-        self
-    }
-
-    pub fn push_field_line(&mut self, field_line: &str) -> &mut Self{
-        self.field.push(String::from(field_line));
-
-        self
-    }
-
-    pub fn append_field(&mut self, field: &mut Vec<String>) -> &mut Self{
-        self.field.append(field);
-
-        self
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.status == "" ||
-        self.message == "" ||
-        self.version == "" ||
-        self.field.len() == 0 ||
-        self.body == ""
-    }
-
-    pub fn is_valid(&self) -> bool {
-        if self.is_empty() {
-            return false;
-        }
-        else{
-            return true;
-        }
-    }
-
-}
-
-impl std::fmt::Display for HtttpResponse {
-    fn fmt(&self, f: &mut std::fmt::Formatter)-> std::fmt::Result {
-        let mut request = format!("{} {} {}", self.version, self.status, self.message);
-
-        for field_line in self.field.clone() {
-            request = request + "\r\n" + &field_line;
-        }
-
-        request = format!("{}\r\n\r\n{}", request, self.body);
-
-        write!(f, "{}", request)
     }
 }
 
@@ -168,10 +43,10 @@ impl Http {
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
-                "method" => { request.method =  pair.as_str().to_string(); },
-                "uri" => { request.uri =  pair.as_str().to_string(); },
-                "version" => { request.version =  pair.as_str().to_string(); },
-                "field_line" => { request.field.push(pair.as_str().to_string()); },
+                "method" => { request.set_method(pair.as_str()); },
+                "uri" => { request.set_uri(pair.as_str()); },
+                "version" => { request.set_version(pair.as_str()); },
+                "field_line" => { request.push_field_line(pair.as_str()); },
                 _ => {},
             }
         }
@@ -186,11 +61,11 @@ impl Http {
 
         for pair in parsed {
             match format!("{:?}",pair.as_rule()).as_str() {
-                "status_code" => { response.status =  pair.as_str().to_string(); },
-                "status_messsage" => { response.message =  pair.as_str().to_string(); },
-                "version" => { response.version =  pair.as_str().to_string(); },
-                "field_line" => { response.field.push(pair.as_str().to_string()); },
-                "response_body" => { response.body =  pair.as_str().to_string(); },
+                "status_code" => { response.set_status_code(pair.as_str()); },
+                "status_messsage" => { response.set_message(pair.as_str()); },
+                "version" => { response.set_version(pair.as_str()); },
+                "field_line" => { response.push_field_line(pair.as_str()); },
+                "response_body" => { response.set_body(pair.as_str()); },
                 _ => {},
             }
         }
@@ -474,7 +349,7 @@ mod tests {
 
         let request = Http::parse_request(http_request);
 
-        println!("{}", request);
+        println!("{}", request.unwrap());
     }
 
     #[test]
@@ -483,7 +358,7 @@ mod tests {
 
         let request = Http::parse_request(http_request);
 
-        println!("{}", request);
+        println!("{}", request.unwrap());
     }
 
     #[test]
@@ -551,7 +426,7 @@ mod tests {
 
         let response = Http::parse_response(http_response);
 
-        println!("{}", response);
+        println!("{}", response.unwrap());
     }
 
     #[test]
@@ -584,7 +459,7 @@ mod tests {
         let mut response = HtttpResponse::new();
 
         response
-        .set_status_line("HTTP/1.1 200 OK")
+        .set_status_line("HTTP/1.1 200 OK").unwrap()
         .push_field_line("Content-Length: 299")
         .set_body("function test(e) {\r\n\
             \tconsole.log(e);\r\n\

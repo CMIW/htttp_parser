@@ -10,4 +10,5 @@ pest = "2.0"
 anyhow = "1.0"
 #thiserror = "1.0"
 pest_derive = "2.0"
-derive-getters = "0.2.0"
+http_request = { git = "https://github.com/CMIW/http_request.git" }
+http_response = { git = "https://github.com/CMIW/http_response.git" }
